@@ -4,95 +4,54 @@ import "ag-grid-community/styles/ag-theme-material.css";
 import React, { useState, useEffect, useRef } from "react";
 import Button from '@mui/material/Button';
 import DownloadIcon from '@mui/icons-material/Download';
-import { Stack } from '@mui/material';
+import Snackbar from '@mui/material/Snackbar';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 import Tooltip from '@mui/material/Tooltip';
-import Box from '@mui/material/Box';
-import SearchIcon from '@mui/icons-material/Search';
-import { styled, alpha } from '@mui/material/styles';
-import InputBase from '@mui/material/InputBase';
+import { Stack } from '@mui/material';
+import AddCustomer from "../components/AddCustomer";
+import AddTraining from "../components/AddTraining";
+import EditCustomer from "../components/EditCustomer";
+
 
 export default function Customers(){
     const [customers, setCustomers] = useState([]);
+    const [deleteSnackBarOpen, setDeleteSnackBarOpen] = useState(false);
+    const [addDialogOpen, setAddDialogOpen] = useState(false);
     const gridRef = useRef();
     const gridApiRef = useRef();
+    const [customerLink, setCustomerLink] = useState('');
     const [colDefs] = useState([
-        {headerName: 'Actions', 
+        {headerName: 'Actions', maxWidth: 250,
         children: [
-            {
+            {field: 'Add', minWidth:80,  width: 50,
                 cellRenderer: params => 
                 <Tooltip title='Add new training'>
-                    <AddToPhotosIcon size='small' color="primary" 
-                        onClick={() => deleteCustomer(params.data._embedded.customers._links.self.href)} />
-                </Tooltip>,
-                width: 50,
+                    <AddToPhotosIcon size='small' color="black" onClick={() => handleAddDialogOpen(params.data._links.customer.href)} /> 
+                </Tooltip>
             },
-            {
-                cellRenderer: params => 
-                <Tooltip title='Edit customer'>
-                    <EditIcon size='small' color="primary" 
-                        onClick={() => deleteCustomer(params.data._embedded.customers._links.self.href)} />
-                </Tooltip>,
-                width: 50,
+            {field: 'Edit', minWidth:80,width: 50,
+                cellRenderer: params => <EditCustomer data={params.data} editCustomer={updateCustomer}></EditCustomer>
             },
-            {
+            {field: 'Delete', minWidth:90, width: 50,
                 cellRenderer: params => 
                 <Tooltip title='Delete customer'>
-                    <DeleteIcon size='small' color="error" 
-                        onClick={() => deleteCustomer(params.data._embedded.customers._links.self.href)} />
-                </Tooltip>,
-                width: 50,
+                    <DeleteIcon size='small' color="black" 
+                        onClick={() => deleteCustomer(params.data._links.customer.href)} />
+                </Tooltip>
             },
             
         ]},
-        {headerName: 'First name',field: 'firstname',filter: true},
-        {headerName: 'Last name',field: 'lastname',filter: true},
-        {headerName: 'Stress address',field: 'streetaddress',filter: true},
-        {headerName: 'Postcode',field: 'postcode',filter: true},
-        {headerName: 'City',field: 'city',filter: true},
-        {headerName: 'Email',field: 'email',filter: true},
-        {headerName: 'Phone',field: 'phone',filter: true}
+        {headerName: 'First name',field: 'firstname',filter: true, flex: 1},
+        {headerName: 'Last name',field: 'lastname',filter: true,flex: 1},
+        {headerName: 'City',field: 'city',filter: true,flex: 1},
+        {headerName: 'Stress address',field: 'streetaddress',filter: true,flex: 1},
+        {headerName: 'Postcode',field: 'postcode',filter: true,flex: 1},
+        {headerName: 'Email',field: 'email',filter: true,flex: 1},
+        {headerName: 'Phone',field: 'phone',filter: true,flex: 1}
     ]);
 
-    const Search = styled('div')(({ theme }) => ({
-            position: 'relative',
-            borderRadius: theme.shape.borderRadius,
-            backgroundColor: alpha(theme.palette.common.white, 0.15),
-            '&:hover': {
-            backgroundColor: alpha(theme.palette.common.white, 0.25),
-            },
-            marginRight: theme.spacing(2),
-            marginLeft: 0,
-            width: '100%',
-            [theme.breakpoints.up('sm')]: {
-            marginLeft: theme.spacing(3),
-            width: 'auto',
-            },
-        }));
-    const SearchIconWrapper = styled('div')(({ theme }) => ({
-            padding: theme.spacing(0, 2),
-            height: '100%',
-            position: 'absolute',
-            pointerEvents: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-        }));
-    const StyledInputBase = styled(InputBase)(({ theme }) => ({
-            color: 'inherit',
-            '& .MuiInputBase-input': {
-            padding: theme.spacing(1, 1, 1, 0),
-            // vertical padding + font size from searchIcon
-            paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-            transition: theme.transitions.create('width'),
-            width: '100%',
-            [theme.breakpoints.up('md')]: {
-                width: '20ch',
-            },
-            },
-        }));
     const handleExport = () =>{
         gridApiRef.current.exportDataAsCsv();
     };
@@ -114,20 +73,86 @@ export default function Customers(){
         })
         .catch(error => console.error(error))
     };
+    const deleteCustomer = (link) =>{
+        if(window.confirm('Are you sure?')) {
+            fetch(link, {method: 'DELETE'})
+            .then(response => fetchCustomers())
+            .catch(err => console.error(err))
+        setDeleteSnackBarOpen(true);
+        }
+    };
+    const handleDeleteSnackClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setDeleteSnackBarOpen(false);
+    };
+    const handleSaveCustomer = (newCustomer)=>{
+        fetch(import.meta.env.VITE_API_CUSTOMERS, {
+            method: 'POST',
+            headers: { 'content-type' : 'application/json' },
+            body: JSON.stringify(newCustomer)
+        })
+        .then(response => {
+            if (!response.ok)
+                throw new Error("Error when adding a customer");
+            return response.json();
+        })
+        .then(data => fetchCustomers())
+        .catch(error => console.error(error))
+    }
+    const handleAddDialogOpen= (customerLink) => {
+        // const customerId = customerLink.split('/').pop();
+        // const updatedCustomerLink = `${import.meta.env.VITE_API_TRAININGS}/${customerId}/customer`;
+        setCustomerLink(customerLink);
+        setAddDialogOpen(true);
+    }
+    const handleAddDialogClose = () => {
+        setAddDialogOpen(false);
+    }
+    const addTraining= (newTraining) => {
+        fetch(import.meta.env.VITE_API_TRAININGS, {
+            method: 'POST',
+            headers: { 'content-type' : 'application/json' },
+            body: JSON.stringify(newTraining)
+        })
+        .then(response => {
+            if (!response.ok)
+                throw new Error("Error when adding a training");
+        
+            return response.json();
+        })
+        .then(() => fetchCustomers())
+        .catch(err => console.error(err))
+    }
+    const handleSaveTraining = (newTraining) =>{
+        console.log('New Training from input:', newTraining);
+        addTraining(newTraining);
+        handleAddDialogClose();
+    }
+    const updateCustomer = (url, updatedCustomer) => { 
+        fetch(url, {
+            method: 'PUT',
+            headers: { 'content-type' : 'application/json' },
+            body: JSON.stringify(updatedCustomer)
+        })
+        .then(response => {
+            if (!response.ok)
+                throw new Error("Error when updating customer");
+            return response.json();
+        })
+        .then(() => fetchCustomers())
+        .catch(err => console.error(err))
+    }
 
     return(
         <>
-            <Box>
-                <Search>
-                    <SearchIconWrapper>
-                    <SearchIcon />
-                    </SearchIconWrapper>
-                    <StyledInputBase
-                    placeholder="Search…"
-                    inputProps={{ 'aria-label': 'search' }}
-                    />
-                </Search>
-            </Box>
+            <h2>Customers</h2>
+            <Stack direction='row' margin={1} spacing={2} justifyContent='center'>
+                <AddCustomer handleSave={handleSaveCustomer} />
+                <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} sx={{mt:1} } 
+                        onClick={() =>handleExport()}>Download file</Button>
+            </Stack>
             <div className="ag-theme-material" style={{width: 1500,height: 500}}>
                 <AgGridReact
                     ref={gridRef}
@@ -141,9 +166,19 @@ export default function Customers(){
                     paginationPageSizeSelector= {false}
                     paginationPageSize={6}
                 />
-                <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} 
-                        sx={{mt:1} } onClick={() =>handleExport()}>Download file</Button>
             </div>
+            <Snackbar
+                open={deleteSnackBarOpen}
+                autoHideDuration={6000}
+                onClose={handleDeleteSnackClose}
+                message="Customer deleted!"
+            />
+            <AddTraining
+                handleCustomerLink={customerLink}
+                handleOpen={addDialogOpen}
+                handleClose={handleAddDialogClose}
+                handleSave={handleSaveTraining}
+            />
         </>
     )
     

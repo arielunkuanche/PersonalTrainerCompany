@@ -7,33 +7,34 @@ import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Tooltip from '@mui/material/Tooltip';
 import dayjs from 'dayjs';
+import Snackbar from '@mui/material/Snackbar';
 
 
 export default function Trainings(){
     const [trainings, setTrainings] = useState([]);
+    const [open, setOpen] = useState(false);
     const gridRef = useRef();
     const gridApiRef = useRef();
+    const defaultColDef ={
+        flex: 2,
+        sortable: true,
+        filter:true,
+        resizable: true,
+    };
     const [colDefs] = useState([
-        {headerName: 'Action', flex: 1,
-        children: [
-            {
-                cellRenderer: params => 
+        {headerName: 'Action', maxWidth:120,
+            cellRenderer: params => 
                 <Tooltip title='Delete training'>
-                    <DeleteIcon size='small' color="error" 
-                        onClick={() => deleteCustomer(params.data._embedded.customers._links.self.href)} />
+                    <DeleteIcon size='small' color="black" 
+                        onClick={() => deleteTraining(params.data._links.self.href)} />
                 </Tooltip>,
                 width: 50,
             },
-            
-        ]},
-        {headerName: 'Date',field: 'date',flex: 1,filter: true,
+        {headerName: 'Date',field: 'date',
             valueFormatter: params => dayjs(params.value).format('DD.MM.YYYY HH:mm')},
-        {headerName: 'Duration',field: 'duration',flex: 1,filter: true},
-        {headerName: 'Activity',field: 'activity',flex: 1,filter: true},
-        {headerName: 'Customer',field: 'customerName',flex: 1,filter: true,
-            
-    },
-
+        {headerName: 'Customer',field: 'customerName'},
+        {headerName: 'Duration in minutes',field: 'duration'},
+        {headerName: 'Activity',field: 'activity'},
     ]);
     const handleExport = () =>{
         gridApiRef.current.exportDataAsCsv();
@@ -56,7 +57,7 @@ export default function Trainings(){
     const fetchTrainings = async () => {
         const response = await fetch(import.meta.env.VITE_API_TRAININGS);
         if (!response.ok) {
-            throw new Error('Failed to fetch trainings' + response.sta);
+            throw new Error('Failed to fetch trainings' + response.statusText);
         }
         const data = await response.json();
         console.log('Trainings data:', data._embedded.trainings);
@@ -87,7 +88,26 @@ export default function Trainings(){
             return 'Error fetching customer details.'; 
         }
     };
-
+    const deleteTraining = (link) =>{
+        console.log(link);
+        if(window.confirm('Are you sure?')) {
+            fetch(link, {method: 'DELETE'})
+            .then(response => {
+                if (!response.ok)
+                    throw new Error("Error in training deletion: " + response.statusText);
+                return response.json();
+            })
+            .then(() => fetchTrainings())
+            .catch(err => console.error(err))
+            setOpen(true);
+        }
+    };
+    const handleDeleteSnackClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setOpen(false);
+    };
     
     
 
@@ -95,7 +115,9 @@ export default function Trainings(){
 
     return(
         <>
-            <h3>Trainings</h3>
+            <h2>Trainings</h2>
+            <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} 
+                        sx={{mt:1} } onClick={() =>handleExport()}>Download file</Button>
             <div className="ag-theme-material" style={{width: 1500,height: 500}}>
                 <AgGridReact
                     ref={gridRef}
@@ -105,13 +127,18 @@ export default function Trainings(){
                     }
                     rowData={trainings}
                     columnDefs={colDefs}
+                    defaultColDef={defaultColDef}
                     pagination= {true}
                     paginationPageSizeSelector= {false}
                     paginationPageSize={6}
                 />
-                <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} 
-                        sx={{mt:1} } onClick={() =>handleExport()}>Download file</Button>
             </div>
+            <Snackbar
+                open={open}
+                autoHideDuration={6000}
+                onClose={handleDeleteSnackClose}
+                message="Training deleted!"
+            />
         </>
     )
 }
