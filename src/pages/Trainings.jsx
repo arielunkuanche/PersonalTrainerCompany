@@ -47,10 +47,9 @@ export default function Trainings(){
                 const updatedTrainingData = await fetchCustomerNames(trainingData);
                 setTrainings(updatedTrainingData);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching training data:', error);
             }
         }
-        
         fetchData();
     }, []);
 
@@ -97,7 +96,7 @@ export default function Trainings(){
                     throw new Error("Error in training deletion: " + response.statusText);
                 return response.json();
             })
-            .then(() => fetchTrainings())
+            .then(data => fetchData(data))
             .catch(err => console.error(err))
             setOpen(true);
         }
@@ -109,13 +108,10 @@ export default function Trainings(){
         setOpen(false);
     };
     
-    
-
-
 
     return(
         <>
-            <h2>Trainings</h2>
+            <h1>Trainings</h1>
             <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} 
                         sx={{mt:1} } onClick={() =>handleExport()}>Download file</Button>
             <div className="ag-theme-material" style={{width: 1500,height: 500}}>

@@ -19,6 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import GroupIcon from '@mui/icons-material/Group';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { Link, Outlet } from 'react-router-dom';
 
 const drawerWidth = 240;
@@ -67,6 +68,12 @@ const navBarItems = [
         icon: <CalendarMonthIcon />,
         label: 'Calendar',
         route: '/calendar'
+    },
+    {
+        id: 3,
+        icon: <BarChartIcon />,
+        label: 'Statistic',
+        route: '/statistic'
     }
 ]   
 

@@ -6,30 +6,24 @@ import Button from '@mui/material/Button';
 import DownloadIcon from '@mui/icons-material/Download';
 import Snackbar from '@mui/material/Snackbar';
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 import Tooltip from '@mui/material/Tooltip';
 import { Stack } from '@mui/material';
 import AddCustomer from "../components/AddCustomer";
-import AddTraining from "../components/AddTraining";
 import EditCustomer from "../components/EditCustomer";
+import AddNewTraining from "../components/AddNewTraining";
 
 
 export default function Customers(){
     const [customers, setCustomers] = useState([]);
     const [deleteSnackBarOpen, setDeleteSnackBarOpen] = useState(false);
-    const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const [addNewTrainingSnackBarOpen, setAddNewTrainingSnackBarOpen] = useState(false);
     const gridRef = useRef();
     const gridApiRef = useRef();
-    const [customerLink, setCustomerLink] = useState('');
     const [colDefs] = useState([
         {headerName: 'Actions', maxWidth: 250,
         children: [
             {field: 'Add', minWidth:80,  width: 50,
-                cellRenderer: params => 
-                <Tooltip title='Add new training'>
-                    <AddToPhotosIcon size='small' color="black" onClick={() => handleAddDialogOpen(params.data._links.customer.href)} /> 
-                </Tooltip>
+                cellRenderer: params => <AddNewTraining data={params.data} handleAddTraining={addTraining}></AddNewTraining>
             },
             {field: 'Edit', minWidth:80,width: 50,
                 cellRenderer: params => <EditCustomer data={params.data} editCustomer={updateCustomer}></EditCustomer>
@@ -46,7 +40,7 @@ export default function Customers(){
         {headerName: 'First name',field: 'firstname',filter: true, flex: 1},
         {headerName: 'Last name',field: 'lastname',filter: true,flex: 1},
         {headerName: 'City',field: 'city',filter: true,flex: 1},
-        {headerName: 'Stress address',field: 'streetaddress',filter: true,flex: 1},
+        {headerName: 'Street address',field: 'streetaddress',filter: true,flex: 1},
         {headerName: 'Postcode',field: 'postcode',filter: true,flex: 1},
         {headerName: 'Email',field: 'email',filter: true,flex: 1},
         {headerName: 'Phone',field: 'phone',filter: true,flex: 1}
@@ -101,15 +95,6 @@ export default function Customers(){
         .then(data => fetchCustomers())
         .catch(error => console.error(error))
     }
-    const handleAddDialogOpen= (customerLink) => {
-        // const customerId = customerLink.split('/').pop();
-        // const updatedCustomerLink = `${import.meta.env.VITE_API_TRAININGS}/${customerId}/customer`;
-        setCustomerLink(customerLink);
-        setAddDialogOpen(true);
-    }
-    const handleAddDialogClose = () => {
-        setAddDialogOpen(false);
-    }
     const addTraining= (newTraining) => {
         fetch(import.meta.env.VITE_API_TRAININGS, {
             method: 'POST',
@@ -124,11 +109,13 @@ export default function Customers(){
         })
         .then(() => fetchCustomers())
         .catch(err => console.error(err))
+        setAddNewTrainingSnackBarOpen(true);
     }
-    const handleSaveTraining = (newTraining) =>{
-        console.log('New Training from input:', newTraining);
-        addTraining(newTraining);
-        handleAddDialogClose();
+    const handleAddNewTrainingSnackClose = (event, reason) =>{
+        if (reason === 'clickaway') {
+            return;
+        }
+        setAddNewTrainingSnackBarOpen(false);
     }
     const updateCustomer = (url, updatedCustomer) => { 
         fetch(url, {
@@ -141,13 +128,14 @@ export default function Customers(){
                 throw new Error("Error when updating customer");
             return response.json();
         })
-        .then(() => fetchCustomers())
+        .then(data => fetchCustomers(data))
         .catch(err => console.error(err))
     }
 
+
     return(
-        <>
-            <h2>Customers</h2>
+        <div className="flex justify-center items-center">
+            <h1>Customers</h1>
             <Stack direction='row' margin={1} spacing={2} justifyContent='center'>
                 <AddCustomer handleSave={handleSaveCustomer} />
                 <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} sx={{mt:1} } 
@@ -173,13 +161,13 @@ export default function Customers(){
                 onClose={handleDeleteSnackClose}
                 message="Customer deleted!"
             />
-            <AddTraining
-                handleCustomerLink={customerLink}
-                handleOpen={addDialogOpen}
-                handleClose={handleAddDialogClose}
-                handleSave={handleSaveTraining}
+            <Snackbar
+                open={addNewTrainingSnackBarOpen}
+                autoHideDuration={6000}
+                onClose={handleAddNewTrainingSnackClose}
+                message="New training added!"
             />
-        </>
+        </div>
     )
     
 }
