@@ -20,7 +20,6 @@
     "@mui/material": "^5.15.15",
     "@mui/x-charts": "^7.1.1",
     "@mui/x-date-pickers": "^7.1.1",
-    "@syncfusion/ej2-react-schedule": "^25.1.37",
     "ag-grid-community": "^31.2.0",
     "ag-grid-react": "^31.2.0",
     "dayjs": "^1.11.10",
