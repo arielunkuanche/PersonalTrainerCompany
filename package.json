@@ -46,6 +46,6 @@
     "vite": "^5.2.0"
   },
   "build": {
-    "chunkSizeWarningLimit": 1000
+    "chunkSizeWarningLimit": 2300
   }
 }
