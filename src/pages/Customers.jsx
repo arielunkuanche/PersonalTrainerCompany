@@ -7,7 +7,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import Snackbar from '@mui/material/Snackbar';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Tooltip from '@mui/material/Tooltip';
-import { Stack } from '@mui/material';
+import { Stack, TextField } from '@mui/material';
 import AddCustomer from "../components/AddCustomer";
 import EditCustomer from "../components/EditCustomer";
 import AddNewTraining from "../components/AddNewTraining";
@@ -19,16 +19,16 @@ export default function Customers(){
     const [addNewTrainingSnackBarOpen, setAddNewTrainingSnackBarOpen] = useState(false);
     const gridRef = useRef();
     const gridApiRef = useRef();
-    const [colDefs] = useState([
+    const [colDefs, setColDefs] = useState([
         {headerName: 'Actions', maxWidth: 250,
         children: [
-            {field: 'Add', minWidth:80,  width: 50,
+            {field: 'Add',  width: 80,
                 cellRenderer: params => <AddNewTraining data={params.data} handleAddTraining={addTraining}></AddNewTraining>
             },
-            {field: 'Edit', minWidth:80,width: 50,
+            {field: 'Edit', width: 80,
                 cellRenderer: params => <EditCustomer data={params.data} editCustomer={updateCustomer}></EditCustomer>
             },
-            {field: 'Delete', minWidth:90, width: 50,
+            {field: 'Delete', width: 90,
                 cellRenderer: params => 
                 <Tooltip title='Delete customer'>
                     <DeleteIcon size='small' color="black" 
@@ -36,28 +36,36 @@ export default function Customers(){
                 </Tooltip>
             },
             
-        ]},
-        {headerName: 'First name',field: 'firstname',filter: true, flex: 1},
-        {headerName: 'Last name',field: 'lastname',filter: true,flex: 1},
-        {headerName: 'City',field: 'city',filter: true,flex: 1},
-        {headerName: 'Street address',field: 'streetaddress',filter: true,flex: 1},
-        {headerName: 'Postcode',field: 'postcode',filter: true,flex: 1},
-        {headerName: 'Email',field: 'email',filter: true,flex: 1},
-        {headerName: 'Phone',field: 'phone',filter: true,flex: 1}
+        ], cellStyle: {textAlign: 'left'}},
+        {headerName: 'First name',field: 'firstname',filter: true,sortable: true,width: 130,cellStyle: {textAlign: 'left'}},
+        {headerName: 'Last name',field: 'lastname',filter: true,sortable: true,width: 130,cellStyle: {textAlign: 'left'}},
+        {headerName: 'City',field: 'city',filter: true,sortable: true,width: 130,cellStyle: {textAlign: 'left'}},
+        {headerName: 'Street address',field: 'streetaddress',filter: true,sortable: true,width: 200,cellStyle: {textAlign: 'left'}},
+        {headerName: 'Postcode',field: 'postcode',filter: true,sortable: true,width: 130,cellStyle: {textAlign: 'left'}},
+        {headerName: 'Email',field: 'email',filter: true,sortable: true,width: 180,cellStyle: {textAlign: 'left'}},
+        {headerName: 'Phone',field: 'phone',filter: true,sortable: true,width: 140,cellStyle: {textAlign: 'left'}}
     ]);
 
     const handleExport = () =>{
         gridApiRef.current.exportDataAsCsv();
     };
+
+    const onFilterTextBoxChanged = (event) => {
+        const filterText = event.target.value;
+        gridApiRef.current.setQuickFilter(filterText);
+    };
+
     useEffect(() => 
         fetchCustomers(), []);
 
     const fetchCustomers = () => {
         fetch(import.meta.env.VITE_API_CUSTOMERS)
         .then (response => {
+            console.log('customer:', response)
             if (!response.ok)
                 throw new Error(response.statusText);
             return response.json();
+            
         })
         .then(data => {
             console.log('rowData: ', data._embedded.customers);
@@ -68,6 +76,7 @@ export default function Customers(){
         .catch(error => console.error(error))
     };
     const deleteCustomer = (link) =>{
+        console.log('customer delete link:', link)
         if(window.confirm('Are you sure?')) {
             fetch(link, {method: 'DELETE'})
             .then(response => fetchCustomers())
@@ -134,13 +143,26 @@ export default function Customers(){
 
 
     return(
-        <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center"  style={{ width: '100%' }}>
             <h1>Customers</h1>
             <Stack direction='row' margin={1} spacing={2} justifyContent='center'>
                 <AddCustomer handleSave={handleSaveCustomer} />
                 <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} sx={{mt:1} } 
                         onClick={() =>handleExport()}>Download file</Button>
             </Stack>
+            <div className="example-header" style={{ textAlign: 'left',marginTop: '3rem', height:70 }}>
+                <TextField 
+                    type="text" 
+                    id="filter-text-box" 
+                    placeholder="Filter..." 
+                    onChange={onFilterTextBoxChanged}
+                    style={{ 
+                        width: '200px', 
+                        height: '20px', 
+                        fontSize: '16px' 
+                    }}
+                />
+            </div>
             <div className="ag-theme-material" style={{width: 1500,height: 500}}>
                 <AgGridReact
                     ref={gridRef}

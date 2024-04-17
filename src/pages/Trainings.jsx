@@ -9,7 +9,6 @@ import Tooltip from '@mui/material/Tooltip';
 import dayjs from 'dayjs';
 import Snackbar from '@mui/material/Snackbar';
 
-
 export default function Trainings(){
     const [trainings, setTrainings] = useState([]);
     const [open, setOpen] = useState(false);
@@ -26,69 +25,44 @@ export default function Trainings(){
             cellRenderer: params => 
                 <Tooltip title='Delete training'>
                     <DeleteIcon size='small' color="black" 
-                        onClick={() => deleteTraining(params.data._links.self.href)} />
+                        onClick={() => deleteTraining(`${import.meta.env.VITE_API_TRAININGS}/${params.data.id}` )} />
                 </Tooltip>,
                 width: 50,
+                cellStyle: {textAlign: 'left'}
             },
         {headerName: 'Date',field: 'date',
-            valueFormatter: params => dayjs(params.value).format('DD.MM.YYYY HH:mm')},
-        {headerName: 'Customer',field: 'customerName'},
-        {headerName: 'Duration in minutes',field: 'duration'},
-        {headerName: 'Activity',field: 'activity'},
+            valueFormatter: params => dayjs(params.value).format('DD.MM.YYYY HH:mm'), cellStyle: {textAlign: 'left'}},
+        {headerName: 'Customer',field: 'customerName', cellStyle: {textAlign: 'left'}},
+        {headerName: 'Duration in minutes',field: 'duration', cellStyle: {textAlign: 'left'}},
+        {headerName: 'Activity',field: 'activity', cellStyle: {textAlign: 'left'}},
     ]);
     const handleExport = () =>{
         gridApiRef.current.exportDataAsCsv();
     };
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const trainingData = await fetchTrainings();
-                const updatedTrainingData = await fetchCustomerNames(trainingData);
-                setTrainings(updatedTrainingData);
-            } catch (error) {
-                console.error('Error fetching training data:', error);
-            }
-        }
-        fetchData();
-    }, []);
+    useEffect(() => fetchTrainings(), [])
 
-    const fetchTrainings = async () => {
-        const response = await fetch(import.meta.env.VITE_API_TRAININGS);
-        if (!response.ok) {
-            throw new Error('Failed to fetch trainings' + response.statusText);
-        }
-        const data = await response.json();
-        console.log('Trainings data:', data._embedded.trainings);
-        return data._embedded.trainings;
-    };
-
-    const fetchCustomerNames = async (trainingData) => {
-        const updatedTrainingData = [];
-        for (const training of trainingData) {
-            const customerName = await getCustomerName(training._links.customer.href);
-            training.customerName = customerName;
-            updatedTrainingData.push(training);
-        }
-        return updatedTrainingData;
-    };
-
-    const getCustomerName = async (customerLink) => {
-        try {
-            const response = await fetch(customerLink);
-            if (!response.ok) {
-                throw new Error('Failed to fetch customer details');
-            }
-            const customerData = await response.json();
-            console.log('customerData', customerData);
-            return `${customerData.firstname} ${customerData.lastname}`;
-        } catch (error) {
-            console.error('Error fetching customer details:', error);
-            return 'Error fetching customer details.'; 
-        }
-    };
+    const fetchTrainings = () =>{
+        fetch(import.meta.env.VITE_API_TRAININGSANDCUSTOMERS)
+        .then(response => {
+            console.log(response)
+            if (!response.ok)
+                throw new Error(response.statusText);
+            return response.json();
+        })
+        .then(data => {
+            console.log('TrainingData: ', data);
+            const formattedData = data.map(training => ({
+                ...training,
+                customerName: `${training.customer.firstname} ${training.customer.lastname}`
+            }))
+            console.log('formattedData: ', formattedData)
+            setTrainings(formattedData)
+        }) 
+        .catch(error => console.error(error)) 
+    }
     const deleteTraining = (link) =>{
-        console.log(link);
+        console.log('delete link', link);
         if(window.confirm('Are you sure?')) {
             fetch(link, {method: 'DELETE'})
             .then(response => {
@@ -96,7 +70,7 @@ export default function Trainings(){
                     throw new Error("Error in training deletion: " + response.statusText);
                 return response.json();
             })
-            .then(data => fetchData(data))
+            .then(data => fetchTrainings(data))
             .catch(err => console.error(err))
             setOpen(true);
         }
@@ -107,9 +81,8 @@ export default function Trainings(){
         }
         setOpen(false);
     };
-    
 
-    return(
+    return (
         <>
             <h1>Trainings</h1>
             <Button variant='contained' size='small' color='secondary' startIcon={<DownloadIcon />} 

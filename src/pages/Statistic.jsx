@@ -1,54 +1,61 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { BarChart } from '@mui/x-charts/BarChart';
+import _ from 'lodash';
 
-export default function Statistic(){
-    // const [trainings, setTrainings] = useState([]); 
+export default function Statistic() {
     const [xLabel, setXLabel] = useState([]);
-    const [dataSeries, setDataSeries] = useState([]);
+    const [duration, setDuration] = useState([]);
 
-    useEffect(() => fetchTrainings(), [])
+    useEffect(() => {
+        const fetchTrainings = async () => {
+            try {
+                const response = await fetch(import.meta.env.VITE_API_TRAININGS);
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                const data = await response.json();
 
-    const fetchTrainings = () => {
-        fetch(import.meta.env.VITE_API_TRAININGS)
-        .then (response => {
-            if (!response.ok)
-                throw new Error(response.statusText);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Trainings for statistic: ', data._embedded.trainings);
-            // setTrainings(data._embedded.trainings);
+                console.log('Trainings for statistic: ', data._embedded.trainings);
 
-            const activities = data._embedded.trainings.map(training => training.activity);
-            console.log('activities data:', activities);
-        
-            //extract activities and duration
-            const durations = data._embedded.trainings.map(training => parseInt(training.duration));
-            console.log('duration data:', durations);
+                const durations = _(data._embedded.trainings)
+                    .groupBy(training => training.activity)
+                    .map((value, key) => ({
+                        activity: key,
+                        duration: _.sumBy(value, 'duration')
+                    }))
+                    .value();
 
-            // update state
-            setXLabel(activities);
-            setDataSeries(durations);
+                console.log('durations data:', durations);
 
-        })
-        .catch(error => console.error(error))
-    }
+                setXLabel(durations.map(entry => entry.activity));
+                setDuration(durations.map(entry => entry.duration));
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchTrainings();
+    }, []);
 
     const chartSetting = {
-        yAxis: [{label: 'Duration (min)',}]
+        yAxis: [{ label: 'Duration (min)', }]
     };
 
     return (
         <>
-            <div style={{width:'108%', height: '500px'}}>
-                <BarChart
-                    xAxis={[ { scaleType: 'band', data: xLabel} ]}
-                    dataset={[{data: dataSeries}]}
-                    series={[{ dataKey: 'data', label: 'Duration (min)'}]}
-                    {...chartSetting}
-            />
+            <div style={{ width: '110%', height: '500px' }}>
+                {xLabel.length === 0 ? (
+                    <p>Loading...</p>
+                ) : (
+                    <BarChart
+                        xAxis={[{ scaleType: 'band', data: xLabel }]}
+                        // dataset={[{data: dataSeries}]}
+                        series={[{ data: duration, label: 'Duration (min)', type: 'bar' }]}
+                        {...chartSetting}
+                    />
+                )}
             </div>
-        </>       
+        </>
     );
 
 }

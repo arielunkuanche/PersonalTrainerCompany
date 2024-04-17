@@ -36,7 +36,7 @@ export default function AddCustomer(props){
 
     return(
         <div>
-            <Button variant='contained' size='small' color='secondary' startIcon={<PersonAddAlt1Icon />} sx={{mt:1}}
+            <Button variant='contained' size='medium' color='secondary' startIcon={<PersonAddAlt1Icon />} sx={{mt:1}}
                     onClick={handleClickOpen}>
             Add new customer
             </Button>

@@ -37,16 +37,19 @@ export default function MyCalendar(){
 
 
     return(
-    <>
-        <h1>Training schedules</h1>
+    <div className="flex justify-center items-center" >
+        <div className="w-3/4" style={{ marginRight: '20%' }}>
+        <h1 className="text-center">Training schedules</h1>
         <Calendar
             localizer={localizer}
             events={events}
             startAccessor="start"
             endAccessor="end"
+            style={{ height: '700px', width: '150%'}}
         >
         </Calendar>
-    </>
+        </div>
+    </div >
     
     )
 }
