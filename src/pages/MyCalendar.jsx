@@ -45,7 +45,7 @@ export default function MyCalendar(){
             events={events}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: '700px', width: '150%'}}
+            style={{ height: '700px', width: '250%'}}
         >
         </Calendar>
         </div>
