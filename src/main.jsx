@@ -10,8 +10,9 @@ import MyCalendar from './pages/MyCalendar.jsx';
 import Statistic from './pages/Statistic.jsx';
 import Error from './pages/Error.jsx';
 
-const router = createBrowserRouter([
-  {
+const router = createBrowserRouter({
+  basename: '/PersonalTrainerCompany',
+  routes: [ {
     path: '/',
     element: <App />,
     errorElement: <Error />,
@@ -34,8 +35,9 @@ const router = createBrowserRouter([
         element: <Statistic />
       }
     ]
-  }
-]);
+  }]
+})
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
 

@@ -55,25 +55,25 @@ const navBarItems = [
         id: 0,
         icon: <GroupIcon />,
         label: 'Customers',
-        route: '/customers'
+        route: '/PersonalTrainerCompany/customers'
     },
     {
         id: 1,
         icon: <DirectionsRunIcon />,
         label: 'Trainings',
-        route: '/trainings'
+        route: '/PersonalTrainerCompany/trainings'
     },
     {
         id: 2,
         icon: <CalendarMonthIcon />,
         label: 'Calendar',
-        route: '/calendar'
+        route: '/PersonalTrainerCompany/calendar'
     },
     {
         id: 3,
         icon: <BarChartIcon />,
         label: 'Statistic',
-        route: '/statistic'
+        route: '/PersonalTrainerCompany/statistic'
     }
 ]   
 
