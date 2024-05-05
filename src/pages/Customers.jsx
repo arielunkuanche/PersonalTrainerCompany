@@ -47,7 +47,10 @@ export default function Customers(){
     ]);
 
     const handleExport = () =>{
-        gridApiRef.current.exportDataAsCsv();
+        gridApiRef.current.exportDataAsCsv({
+            allColumns: false,
+            columnKeys: ['firstname','lastname','city','streetaddress','postcode','email','phone' ]
+        });
     };
 
     const onFilterTextBoxChanged = (event) => {
